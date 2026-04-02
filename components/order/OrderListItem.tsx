@@ -1,8 +1,8 @@
 import { cancelOrder } from '@/services/orders/ordersApi'
 import { getAuthHeaders } from '@/utils/imageUtils'
 import { Image } from 'expo-image'
-import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
+import type { ImageSourcePropType } from 'react-native'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import CustomModal from '../common/CustomModal'
 
@@ -12,6 +12,8 @@ export type OrderItemListType = {
     price: number,
     image: string,
     status: string
+    /** Локальное превью (мок-заказы). */
+    localImage?: ImageSourcePropType
 }
 
 export type OrderListItemDtoType = {
@@ -22,7 +24,6 @@ export type OrderListItemDtoType = {
 const OrderListItem = ({ order, onOrderCancelled }: { order: OrderItemListType, onOrderCancelled: () => void; }) => {
     const [cancelOrderConfirmVisible, setCancelOrderConfirmVisible] = useState<boolean>(false);
     const [successCancelOrderVisible, setSuccessCancelOrderVisible] = useState<boolean>(false);
-    const router = useRouter();
 
     const closeOrderConfirmModal = () => {
         setCancelOrderConfirmVisible(false);
@@ -78,14 +79,22 @@ const OrderListItem = ({ order, onOrderCancelled }: { order: OrderItemListType, 
                         </TouchableOpacity>
                     }
                 </View>
-                <Image
-                    style={styles.image}
-                    source={{
-                        uri: order.image,
-                        headers: getAuthHeaders(),
-                    }}
-                    contentFit="cover"
-                />
+                {order.localImage != null ? (
+                    <Image
+                        style={styles.image}
+                        source={order.localImage}
+                        contentFit="cover"
+                    />
+                ) : (
+                    <Image
+                        style={styles.image}
+                        source={{
+                            uri: order.image,
+                            headers: getAuthHeaders(),
+                        }}
+                        contentFit="cover"
+                    />
+                )}
                 <View style={styles.orderTextInfo}>
                     <Text style={styles.textInfo}>{order.title}</Text>
                     <Text style={[styles.textInfo, { fontSize: 16, }]}>{order.price} алгокоинов</Text>

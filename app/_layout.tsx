@@ -1,4 +1,5 @@
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { setStore } from '@/services/commonApi'; // Добавьте этот импорт
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ImageBackground, StyleSheet } from 'react-native';
@@ -10,9 +11,13 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { persistor, store } from '@/stores/auth/authStore';
 
+console.log('Устанавливаем store в API');
+setStore(store);
+
 export const unstable_settings = {
-  anchor: 'auth',
+    anchor: 'auth',
 };
+
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -69,6 +74,14 @@ export default function RootLayout() {
                   animation: 'slide_from_right',
                   presentation: 'card',
                 }} 
+              />
+              <Stack.Screen
+                name="ranks-info"
+                options={{
+                  headerShown: false,
+                  animation: 'slide_from_right',
+                  presentation: 'card',
+                }}
               />
             </Stack>
           </ImageBackground>

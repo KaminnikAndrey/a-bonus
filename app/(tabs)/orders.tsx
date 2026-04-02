@@ -2,17 +2,15 @@ import OrderListItem, { OrderListItemDtoType } from '@/components/order/OrderLis
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getAllOrdersByUser } from '@/services/orders/ordersApi';
-import { userSelector } from '@/stores/auth/authStore';
-import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
 
 export default function OrdersScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [ordersListDto, setOrdersListDto] = useState<OrderListItemDtoType[]>([]);
-  const user = useSelector(userSelector);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -36,8 +34,28 @@ export default function OrdersScreen() {
       setIsLoading(true);
       await fetchAllOrdersByUser(0, true);
       setIsLoading(false);
-    })()
+    })();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let mounted = true;
+      (async () => {
+        const { success, data, pagination } = await getAllOrdersByUser(0, 5);
+        if (!mounted) return;
+        if (success && data) {
+          setOrdersListDto(data);
+          if (pagination) {
+            setHasMore(pagination.hasMore);
+            setCurrentPage(pagination.currentPage);
+          }
+        }
+      })();
+      return () => {
+        mounted = false;
+      };
+    }, [])
+  );
 
   const fetchAllOrdersByUser = async (page: number = 0, reset: boolean = false) => {
     const { success, data, pagination } = await getAllOrdersByUser(page, 5);

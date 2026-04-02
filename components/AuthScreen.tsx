@@ -125,6 +125,12 @@ export default function AuthScreen({ onBack, onSuccess, userRole }: AuthScreenPr
             <Text style={styles.loginButtonText}>Войти</Text>
           )}
         </TouchableOpacity>
+
+        {__DEV__ && (
+          <Text style={[styles.devHint, { color: colors.placeholder }]}>
+            Демо без сервера: логин mock-student или mock-teacher, пароль любой.
+          </Text>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -199,5 +205,11 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: {
     opacity: 0.6,
+  },
+  devHint: {
+    marginTop: 20,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });

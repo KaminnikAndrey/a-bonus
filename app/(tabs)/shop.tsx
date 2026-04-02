@@ -4,7 +4,7 @@ import { getAllShopItems } from "@/services/shop/shopApi";
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ShopItemList, { ShopItemListInfo } from "../../components/shop/ShopItemList";
+import ShopItemList, { H_PADDING, ShopItemListInfo } from '@/components/shop/ShopItemList';
 
 export default function ShopScreen() {
   const colorScheme = useColorScheme();
@@ -55,29 +55,41 @@ export default function ShopScreen() {
   }
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: 'transparent' }]}>
+    <SafeAreaView
+      edges={['top']}
+      style={[styles.container, { backgroundColor: colors.backgroundSurface }]}
+    >
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Магазин</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Магазин подарков</Text>
       </View>
       <View style={styles.content}>
-        { isLoading ? <ActivityIndicator color={"#6766AA"} size={'large'}/> :
-        itemsList.length == 0 ?
+        {isLoading ? (
+          <ActivityIndicator color="#6766AA" size="large" />
+        ) : itemsList.length === 0 ? (
           <Text style={[styles.subtitle, { color: colors.text }]}>
-            Магазин подарков пуст. Админимстратор еще не добавил ассортимент.
+            Магазин подарков пуст. Администратор ещё не добавил ассортимент.
           </Text>
-        : 
-         <FlatList
+        ) : (
+          <FlatList
             style={styles.listContainer}
             data={itemsList}
-            renderItem={({item}) => <ShopItemList id ={item.id} uri={item.uri} title={item.title} price={item.price}/>}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <ShopItemList {...item} />}
             numColumns={2}
+            columnWrapperStyle={styles.columnWrap}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}
-            ListFooterComponent={isLoadingMore ? <ActivityIndicator color={"#6766AA"} size={'small'} style={{ marginVertical: 16 }} /> : null}
+            ListFooterComponent={
+              isLoadingMore ? (
+                <ActivityIndicator color="#6766AA" size="small" style={{ marginVertical: 16 }} />
+              ) : null
+            }
           />
-        }
+        )}
       </View>
     </SafeAreaView>
   );
@@ -88,28 +100,39 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    textAlign: 'center',
+    paddingHorizontal: H_PADDING,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24
+    paddingHorizontal: 0,
   },
   title: {
     fontSize: 24,
+    lineHeight: 31,
     textAlign: 'center',
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontWeight: '700',
+    letterSpacing: -0.48,
   },
   subtitle: {
     fontSize: 16,
     textAlign: 'center',
+    paddingHorizontal: 24,
   },
   listContainer: {
     flex: 1,
-    width: "100%"
-  }
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  listContent: {
+    paddingHorizontal: H_PADDING,
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+  columnWrap: {
+    justifyContent: 'space-between',
+  },
 });

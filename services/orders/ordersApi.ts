@@ -1,6 +1,15 @@
 import { OrderItemListType, OrderListItemDtoType } from '@/components/order/OrderListItem';
 import { instance } from '@/services/commonApi';
+import { cancelStoredMockOrder, getStoredMockOrders, type StoredMockOrder } from '@/services/orders/mockOrdersStore';
+import { getMockShopItemById } from '@/services/shop/shopApi';
 import { OrderDTO, OrderStatus, PageOrderDTO, PresentResponse } from '@/services/types';
+import { store } from '@/stores/auth/authStore';
+
+function isDevMockShopStudent(): boolean {
+    if (!__DEV__) return false;
+    const login = store.getState()?.auth?.creds?.login?.trim().toLowerCase() ?? '';
+    return login === 'mock-student';
+}
 
 const mapOrderStatusToUI = (status: OrderStatus): string => {
     const statusMap: Record<OrderStatus, string> = {
@@ -73,6 +82,7 @@ const groupOrdersByDate = (orders: Array<OrderItemListType & { orderDate?: strin
             price: order.price,
             image: order.image,
             status: order.status,
+            ...(order.localImage != null ? { localImage: order.localImage } : {}),
         });
     });
     
@@ -80,6 +90,25 @@ const groupOrdersByDate = (orders: Array<OrderItemListType & { orderDate?: strin
         date,
         data,
     }));
+};
+
+const mapStoredMockOrdersToItems = (
+    stored: StoredMockOrder[]
+): Array<OrderItemListType & { orderDate?: string }> => {
+    return stored.map((row) => {
+        const mock = getMockShopItemById(row.presentId);
+        const statusUi = row.status === 'CANCELLED' ? 'Отменен' : 'Заказан';
+        const local = mock?.localImages?.[0];
+        return {
+            id: row.id,
+            title: mock?.title ?? 'Подарок',
+            price: mock?.price ?? 0,
+            image: '',
+            status: statusUi,
+            orderDate: row.createdAt,
+            ...(local != null ? { localImage: local } : {}),
+        };
+    });
 };
 
 /**
@@ -91,6 +120,20 @@ export const getAllOrdersByUser = async (
     sortBy: string = 'id',
     sortDir: string = 'desc'
 ): Promise<{ success: boolean; data: OrderListItemDtoType[]; pagination?: { hasMore: boolean; currentPage: number; totalPages: number }; error?: string }> => {
+    if (isDevMockShopStudent()) {
+        const stored = await getStoredMockOrders();
+        const items = mapStoredMockOrdersToItems(stored);
+        const groupedOrders = groupOrdersByDate(items);
+        return {
+            success: true,
+            data: groupedOrders,
+            pagination: {
+                hasMore: false,
+                currentPage: 0,
+                totalPages: 1,
+            },
+        };
+    }
     try {
         const response = await instance.get<PageOrderDTO>('/api/orders', {
             params: { page, size, sortBy, sortDir },
@@ -150,6 +193,12 @@ export const makeOrder = async (presentId: string): Promise<{ success: boolean; 
  * Отменить заказ
  */
 export const cancelOrder = async (id: string): Promise<{ success: boolean; data?: OrderDTO; error?: string }> => {
+    if (isDevMockShopStudent() && id.startsWith('mock-')) {
+        const ok = await cancelStoredMockOrder(id);
+        return ok
+            ? { success: true }
+            : { success: false, error: 'Заказ не найден' };
+    }
     try {
         const response = await instance.post<OrderDTO>(`/api/orders/${id}/cancel`);
         

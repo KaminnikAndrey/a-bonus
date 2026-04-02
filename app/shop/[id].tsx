@@ -2,7 +2,7 @@ import CustomModal from '@/components/common/CustomModal';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getAlgocoins } from '@/services/profile/profileApi';
-import { getShopItem, orderShopItem } from "@/services/shop/shopApi";
+import { getShopItem, orderShopItem, type ShopItemInfo as ShopItemInfoApi } from "@/services/shop/shopApi";
 import { userSelector } from '@/stores/auth/authStore';
 import { getAuthHeaders } from '@/utils/imageUtils';
 import { Image } from 'expo-image';
@@ -14,21 +14,13 @@ import { useSelector } from 'react-redux';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-type ShopItemInfo = {
-  title: string
-  price: number
-  stock: number
-  images: string[]
-}
-
-
 export default function ShopItemScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const user = useSelector(userSelector);
-  const [shopItem, setShopItem] = useState<ShopItemInfo | null>(null);
+  const [shopItem, setShopItem] = useState<ShopItemInfoApi | null>(null);
   const [algocoins, setAlgocoins] = useState(0);
 
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
@@ -111,17 +103,30 @@ export default function ShopItemScreen() {
               showsHorizontalScrollIndicator={false}
               style={styles.imageScrollView}
             >
-              {shopItem?.images.map((image, index) => (
-                <Image
-                  key={index}
-                  source={{ 
-                    uri: image,
-                    headers: getAuthHeaders(),
-                  }}
-                  style={styles.productImage}
-                  contentFit="cover"
-                />
-              ))}
+              {shopItem?.localImages && shopItem.localImages.length > 0
+                ? shopItem.localImages.map((src, index) => (
+                    <Image
+                      key={`local-${index}`}
+                      source={src}
+                      style={styles.productImage}
+                      contentFit="cover"
+                    />
+                  ))
+                : shopItem?.images.map((image, index) => (
+                    <Image
+                      key={index}
+                      source={
+                        shopItem.imagesWithoutAuth
+                          ? { uri: image }
+                          : {
+                              uri: image,
+                              headers: getAuthHeaders(),
+                            }
+                      }
+                      style={styles.productImage}
+                      contentFit="cover"
+                    />
+                  ))}
             </ScrollView>
             {/* Информация о товаре */}
             <View style={styles.productInfo}>
