@@ -63,14 +63,12 @@ const DEV_MOCK_SHOP_LIST: ShopItemListInfo[] = [
         localImage: MOCK_SHOP_IMAGE_BY_ID['5'],
         title: 'Ручка с логотипом компании',
         price: 25,
-        showCartButton: true,
     },
     {
         id: '6',
         localImage: MOCK_SHOP_IMAGE_BY_ID['6'],
         title: 'Ручка с логотипом компании',
         price: 25,
-        showCartButton: true,
     },
 ];
 
