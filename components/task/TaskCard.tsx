@@ -1,14 +1,12 @@
-import { StudentTask, TaskTabFilter } from '@/components/task/mockStudentTasks';
+import {
+  getTaskBadgeColors,
+  getTaskDetailBadge,
+  type StudentTask,
+} from '@/components/task/mockStudentTasks';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-
-const FILTER_LABELS: Record<TaskTabFilter, string> = {
-  active: 'Активна',
-  overdue: 'Просрочена',
-  completed: 'Выполнена',
-};
 
 type Props = {
   task: StudentTask;
@@ -19,12 +17,15 @@ export default function TaskCard({ task, onPress }: Props) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const badgeColors = {
-    active: { bg: colors.primaryLight + '44', text: colors.primary },
-    overdue: { bg: '#FFEBEE', text: '#C62828' },
-    completed: { bg: colors.successLight, text: colors.success },
-  };
-  const badge = badgeColors[task.filter];
+  const { badgeLabel, badgeBg, badgeText } = useMemo(() => {
+    const detail = getTaskDetailBadge(task);
+    const palette = getTaskBadgeColors(detail.variant);
+    return {
+      badgeLabel: detail.label,
+      badgeBg: palette.backgroundColor,
+      badgeText: palette.textColor,
+    };
+  }, [task]);
 
   return (
     <Pressable
@@ -38,8 +39,10 @@ export default function TaskCard({ task, onPress }: Props) {
         <Text style={[styles.course, { color: colors.placeholder }]} numberOfLines={1}>
           {task.courseName}
         </Text>
-        <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-          <Text style={[styles.badgeText, { color: badge.text }]}>{FILTER_LABELS[task.filter]}</Text>
+        <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+          <Text style={[styles.badgeText, { color: badgeText }]} numberOfLines={1}>
+            {badgeLabel}
+          </Text>
         </View>
       </View>
       <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>

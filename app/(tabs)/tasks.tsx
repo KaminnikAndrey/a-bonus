@@ -8,7 +8,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FILTERS: { key: TaskTabFilter; label: string }[] = [
-  { key: 'active', label: 'Активные' },
+  { key: 'active', label: 'В работе' },
   { key: 'overdue', label: 'Просроченные' },
   { key: 'completed', label: 'Выполненные' },
 ];
