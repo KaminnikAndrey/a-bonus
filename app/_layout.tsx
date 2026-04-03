@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
+import { ProjectFeedProvider } from '@/contexts/ProjectFeedContext';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { persistor, store } from '@/stores/auth/authStore';
@@ -39,6 +40,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <PersistGate persistor={persistor}>
         <ThemeProvider value={theme}>
+          <ProjectFeedProvider>
           <ImageBackground 
             style={styles.container} 
             imageStyle={styles.backgroundImage} 
@@ -84,6 +86,14 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="feed/publish"
+                options={{
+                  headerShown: false,
+                  animation: 'slide_from_right',
+                  presentation: 'card',
+                }}
+              />
+              <Stack.Screen
                 name="ranks-info"
                 options={{
                   headerShown: false,
@@ -93,6 +103,7 @@ export default function RootLayout() {
               />
             </Stack>
           </ImageBackground>
+          </ProjectFeedProvider>
         </ThemeProvider>
       </PersistGate>
     </Provider>
