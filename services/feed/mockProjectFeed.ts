@@ -35,7 +35,7 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: false,
     stack: 'Go, PostgreSQL',
-    meta: '2 апреля',
+    meta: '16 июня',
   },
   {
     id: 'p-ivan',
@@ -49,7 +49,7 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: false,
     stack: 'Учебный проект',
-    meta: '1 апреля',
+    meta: '14 июня',
   },
   {
     id: 'p1',
@@ -64,7 +64,7 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: false,
     stack: 'JavaScript, Canvas',
-    meta: '2 апреля',
+    meta: '15 июня',
   },
   {
     id: 'p2',
@@ -79,7 +79,7 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: false,
     stack: 'Python, aiogram',
-    meta: '30 марта',
+    meta: '12 июня',
   },
   {
     id: 'p3',
@@ -94,7 +94,7 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: false,
     isMine: true,
     stack: 'HTML, CSS, JS',
-    meta: '28 марта',
+    meta: '10 июня',
   },
   {
     id: 'p-mine2',
@@ -108,7 +108,7 @@ export const MOCK_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: true,
     stack: 'Node.js, SQLite',
-    meta: '25 марта',
+    meta: '5 июня',
   },
 ];
 
@@ -133,7 +133,7 @@ export const MOCK_TEACHER_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: true,
     stack: 'HTML, CSS, методичка',
-    meta: '28 марта',
+    meta: '10 июня',
   },
   {
     id: 't-p2',
@@ -148,7 +148,7 @@ export const MOCK_TEACHER_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: true,
     isMine: true,
     stack: 'Python',
-    meta: '25 марта',
+    meta: '5 июня',
   },
   {
     id: 't-p3',
@@ -163,7 +163,7 @@ export const MOCK_TEACHER_PROJECT_FEED: ProjectFeedItem[] = [
     inMyGroup: false,
     isMine: true,
     stack: 'Методика',
-    meta: '20 марта',
+    meta: '1 июня',
   },
 ];
 

@@ -1,11 +1,17 @@
 import TaskCard from '@/components/task/TaskCard';
-import { MOCK_STUDENT_TASKS, TaskTabFilter } from '@/components/task/mockStudentTasks';
+import { TaskTabFilter } from '@/components/task/mockStudentTasks';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { hydrateMockStudentTaskState } from '@/services/studentTasks/mockStudentTaskStateStore';
+import { resolveDemoStudentId } from '@/services/studentTasks/resolveDemoStudentId';
+import { listStudentTasksForStudent } from '@/services/studentTasks/studentTaskResolver';
+import { userSelector } from '@/stores/auth/authStore';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 const FILTERS: { key: TaskTabFilter; label: string }[] = [
   { key: 'active', label: 'В работе' },
@@ -18,8 +24,27 @@ export default function TasksScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
   const [filter, setFilter] = useState<TaskTabFilter>('active');
+  const [listTick, setListTick] = useState(0);
+  const user = useSelector(userSelector);
+  const studentId = resolveDemoStudentId(user);
 
-  const tasks = useMemo(() => MOCK_STUDENT_TASKS.filter((t) => t.filter === filter), [filter]);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void (async () => {
+        await hydrateMockStudentTaskState(studentId);
+        if (!cancelled) setListTick((t) => t + 1);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [studentId])
+  );
+
+  const tasks = useMemo(() => {
+    void listTick;
+    return listStudentTasksForStudent(studentId).filter((t) => t.filter === filter);
+  }, [studentId, filter, listTick]);
 
   return (
     <SafeAreaView edges={['top']} style={styles.safe}>

@@ -23,3 +23,16 @@ export function buildTaskRewardLine(coins: string, expLead: string): string {
   if (e) return `${coinPart} + ${e} EXP первым трем!`;
   return coinPart;
 }
+
+export function parseTaskRewardLine(reward: string): { coins: string; expLead: string } {
+  const coinsM = reward.match(/(\d+)\s*коинов?/i);
+  const expM = reward.match(/(\d+)\s*EXP/i);
+  return { coins: coinsM?.[1] ?? '', expLead: expM?.[1] ?? '' };
+}
+
+/** ISO `YYYY-MM-DD` → дд.мм.гг для полей формы. */
+export function isoToDdMmYy(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return `${String(d).padStart(2, '0')}.${String(m).padStart(2, '0')}.${String(y).slice(-2)}`;
+}

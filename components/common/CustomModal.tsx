@@ -26,6 +26,11 @@ const CustomModal = ({
 
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
+
+    if (!visible) {
+        return null;
+    }
+
     return (
         <Modal
             animationType='fade'

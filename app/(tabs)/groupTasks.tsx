@@ -1,6 +1,7 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { hydrateMockCreatedTasks } from '@/services/groupTasks/mockCreatedTasksStore';
+import { hydrateMockDeletedTeacherTasks } from '@/services/groupTasks/mockDeletedTeacherTasksStore';
 import {
   getMockTeacherGroupTasksMerged,
   getMockTeacherGroupTaskTabs,
@@ -82,6 +83,7 @@ export default function GroupTasksScreen() {
       let cancelled = false;
       void (async () => {
         await hydrateMockCreatedTasks(teacherId);
+        await hydrateMockDeletedTeacherTasks(teacherId);
         if (!cancelled) setListTick((t) => t + 1);
       })();
       return () => {

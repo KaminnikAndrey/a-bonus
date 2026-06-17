@@ -13,7 +13,7 @@ export default function WelcomeScreen({ onRoleSelect }: WelcomeScreenProps) {
   const colors = Colors[colorScheme ?? 'light'];
 
   return (
-    <SafeAreaView style={[styles.container]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.content}>
           <View style={styles.logoContainer}>
             <Image style={styles.logo} source={require("@/assets/images/logo.png")}/>

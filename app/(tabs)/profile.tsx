@@ -31,7 +31,7 @@ const STUDENT_TABS: { key: StudentTab; label: string }[] = [
 /** Демо-история начислений (как в макете «История»). */
 const DEMO_HISTORY_SECTIONS: { title: string; rows: { desc: string; amount: string }[] }[] = [
   {
-    title: '10 октября 2026',
+    title: '14 июня 2026',
     rows: [
       { desc: 'За лучший проект в ленте', amount: '+10 EXP' },
       { desc: 'Выполнение ДЗ', amount: '+2 EXP' },
@@ -41,7 +41,7 @@ const DEMO_HISTORY_SECTIONS: { title: string; rows: { desc: string; amount: stri
     ],
   },
   {
-    title: '3 октября 2026',
+    title: '7 июня 2026',
     rows: [{ desc: 'Выполнение ДЗ', amount: '+2 EXP' }],
   },
 ];

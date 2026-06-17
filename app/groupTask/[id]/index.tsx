@@ -1,17 +1,28 @@
 import DeleteTaskConfirmModal from '@/components/groupTasks/DeleteTaskConfirmModal';
+import StudentStatusPickerModal from '@/components/groupTasks/StudentStatusPickerModal';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import {
   getMockTeacherGroupTaskDetail,
   getTeacherTaskStudentStatusLabel,
   TEACHER_TASK_STATUS_TEXT_COLOR,
+  type TeacherTaskDetailStudent,
+  type TeacherTaskStudentStatusKind,
 } from '@/services/groupTasks/mockTeacherGroupTaskDetail';
 import { hydrateMockCreatedTasks } from '@/services/groupTasks/mockCreatedTasksStore';
+import { hydrateMockDeletedTeacherTasks } from '@/services/groupTasks/mockDeletedTeacherTasksStore';
+import { hydrateMockTeacherTaskEdits } from '@/services/groupTasks/mockTeacherTaskEditStore';
+import { removeMockTeacherGroupTaskById } from '@/services/groupTasks/mockTeacherGroupTasks';
+import {
+  hydrateMockTeacherTaskReviews,
+  setTeacherStudentTaskStatus,
+} from '@/services/groupTasks/mockTeacherTaskReviewStore';
 import { userSelector } from '@/stores/auth/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import type { Href } from 'expo-router';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -37,20 +48,72 @@ export default function TeacherGroupTaskDetailScreen() {
   const teacherId =
     user?.id != null && String(user.id).trim() !== '' ? String(user.id) : 'unknown';
 
+  const [detailTick, setDetailTick] = useState(0);
+  /** Локальные статусы — сразу обновляют UI, не зависят от гонки hydrate при закрытии модалки. */
+  const [statusByStudentId, setStatusByStudentId] = useState<
+    Record<string, TeacherTaskStudentStatusKind>
+  >({});
+
   useEffect(() => {
-    void hydrateMockCreatedTasks(teacherId);
+    setStatusByStudentId({});
+  }, [id, teacherId]);
+
+  const reloadFromStore = useCallback(async () => {
+    await hydrateMockCreatedTasks(teacherId);
+    await hydrateMockDeletedTeacherTasks(teacherId);
+    await hydrateMockTeacherTaskEdits(teacherId);
+    await hydrateMockTeacherTaskReviews(teacherId);
+    setDetailTick((t) => t + 1);
   }, [teacherId]);
 
-  const detail = useMemo(
-    () => getMockTeacherGroupTaskDetail(id, teacherId),
-    [id, teacherId]
+  useFocusEffect(
+    useCallback(() => {
+      void reloadFromStore();
+    }, [reloadFromStore])
   );
+
+  const detail = useMemo(() => {
+    void detailTick;
+    return getMockTeacherGroupTaskDetail(id, teacherId);
+  }, [id, teacherId, detailTick]);
+
+  const studentsForList = useMemo(() => {
+    if (!detail) return [];
+    return detail.students.map((s) => ({
+      ...s,
+      status: statusByStudentId[s.id] ?? s.status,
+    }));
+  }, [detail, statusByStudentId]);
+
+  useEffect(() => {
+    if (!detail) return;
+    setStatusByStudentId((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const s of detail.students) {
+        if (next[s.id] === undefined) {
+          next[s.id] = s.status;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [detail]);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [statusPickerStudent, setStatusPickerStudent] = useState<TeacherTaskDetailStudent | null>(
+    null
+  );
+  const statusPickerStudentRef = useRef<TeacherTaskDetailStudent | null>(null);
   const onBack = () => router.back();
 
   const handleConfirmDelete = () => {
     setDeleteModalVisible(false);
-    router.back();
+    void (async () => {
+      if (id) {
+        await removeMockTeacherGroupTaskById(teacherId, id);
+      }
+      router.back();
+    })();
   };
 
   const dateRange = detail
@@ -61,6 +124,40 @@ export default function TeacherGroupTaskDetailScreen() {
     if (!id) return;
     const q = new URLSearchParams({ taskId: id, studentId });
     router.push(`/groupTask/student-check?${q.toString()}` as Href);
+  };
+
+  const openEdit = () => {
+    if (!id) return;
+    router.push({ pathname: '/groupTask/create', params: { taskId: id } } as Href);
+  };
+
+  const openStatusPicker = (student: TeacherTaskDetailStudent) => {
+    statusPickerStudentRef.current = student;
+    setStatusPickerStudent(student);
+  };
+
+  const closeStatusPicker = () => {
+    statusPickerStudentRef.current = null;
+    setStatusPickerStudent(null);
+  };
+
+  const handleSelectStatus = (status: TeacherTaskDetailStudent['status']) => {
+    const student = statusPickerStudentRef.current;
+    if (!id || !student) return;
+    setStatusByStudentId((prev) => ({ ...prev, [student.id]: status }));
+    closeStatusPicker();
+    void (async () => {
+      await setTeacherStudentTaskStatus(teacherId, id, student.id, status);
+      setDetailTick((t) => t + 1);
+    })();
+  };
+
+  const handleOpenReviewFromPicker = () => {
+    const student = statusPickerStudentRef.current;
+    if (!student) return;
+    const studentId = student.id;
+    closeStatusPicker();
+    openStudentReview(studentId);
   };
 
   if (!detail) {
@@ -100,6 +197,7 @@ export default function TeacherGroupTaskDetailScreen() {
           keyboardShouldPersistTaps="always"
           nestedScrollEnabled>
           <Text style={[styles.taskTitle, { color: colors.text }]}>{detail.title}</Text>
+          <Text style={[styles.groupLine, { color: colors.primary }]}>{detail.groupName}</Text>
           <Text style={[styles.rewardLine, { color: colors.text }]}>{detail.reward}</Text>
           <Text style={[styles.periodLine, { color: colors.placeholder }]}>{dateRange}</Text>
 
@@ -113,40 +211,30 @@ export default function TeacherGroupTaskDetailScreen() {
           </View>
 
           <Text style={[styles.studentsSectionTitle, { color: colors.text }]}>Ученики и статус:</Text>
-          {detail.students.map((s) => {
-            if (s.status === 'awaiting_review') {
-              return (
-                <TouchableOpacity
-                  key={s.id}
-                  activeOpacity={0.88}
-                  onPress={() => openStudentReview(s.id)}
-                  style={[styles.studentRow, { backgroundColor: STUDENT_ROW_BG }]}
-                  accessibilityLabel={`${s.fullName}, ожидает проверки, открыть проверку`}
-                  accessibilityRole="button">
-                  <Text style={[styles.studentName, { color: colors.text }]} numberOfLines={1}>
-                    {s.fullName}
-                  </Text>
-                  <Text
-                    style={[styles.studentStatus, { color: TEACHER_TASK_STATUS_TEXT_COLOR[s.status] }]}
-                    numberOfLines={1}>
-                    {getTeacherTaskStudentStatusLabel(s.status)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
-            return (
-              <View key={s.id} style={[styles.studentRow, { backgroundColor: STUDENT_ROW_BG }]}>
-                <Text style={[styles.studentName, { color: colors.text }]} numberOfLines={1}>
-                  {s.fullName}
-                </Text>
+          <Text style={[styles.studentsHint, { color: colors.placeholder }]}>
+            Нажмите на ученика, чтобы изменить статус
+          </Text>
+          {studentsForList.map((s) => (
+            <TouchableOpacity
+              key={s.id}
+              activeOpacity={0.88}
+              onPress={() => openStatusPicker(s)}
+              style={[styles.studentRow, { backgroundColor: STUDENT_ROW_BG }]}
+              accessibilityLabel={`${s.fullName}, ${getTeacherTaskStudentStatusLabel(s.status)}, изменить статус`}
+              accessibilityRole="button">
+              <Text style={[styles.studentName, { color: colors.text }]} numberOfLines={1}>
+                {s.fullName}
+              </Text>
+              <View style={styles.studentStatusWrap}>
                 <Text
                   style={[styles.studentStatus, { color: TEACHER_TASK_STATUS_TEXT_COLOR[s.status] }]}
                   numberOfLines={1}>
                   {getTeacherTaskStudentStatusLabel(s.status)}
                 </Text>
+                <Ionicons name="chevron-down" size={16} color={colors.placeholder} />
               </View>
-            );
-          })}
+            </TouchableOpacity>
+          ))}
         </ScrollView>
 
         <View
@@ -164,7 +252,7 @@ export default function TeacherGroupTaskDetailScreen() {
               { backgroundColor: CTA_PURPLE },
               pressed && styles.footerBtnPressed,
             ]}
-            onPress={() => {}}
+            onPress={openEdit}
             hitSlop={8}
             accessibilityLabel="Изменить задачу">
             <Text style={styles.footerBtnText}>Изменить</Text>
@@ -187,6 +275,17 @@ export default function TeacherGroupTaskDetailScreen() {
         visible={deleteModalVisible}
         onCancel={() => setDeleteModalVisible(false)}
         onConfirm={handleConfirmDelete}
+      />
+
+      <StudentStatusPickerModal
+        visible={statusPickerStudent != null}
+        studentName={statusPickerStudent?.fullName ?? ''}
+        currentStatus={statusPickerStudent?.status ?? 'not_completed'}
+        onCancel={closeStatusPicker}
+        onSelect={handleSelectStatus}
+        onOpenReview={
+          statusPickerStudent?.status === 'awaiting_review' ? handleOpenReviewFromPicker : undefined
+        }
       />
     </SafeAreaView>
   );
@@ -235,6 +334,11 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
     lineHeight: 28,
+    marginBottom: 6,
+  },
+  groupLine: {
+    fontSize: 15,
+    fontWeight: '600',
     marginBottom: 10,
   },
   rewardLine: {
@@ -262,6 +366,10 @@ const styles = StyleSheet.create({
   studentsSectionTitle: {
     fontSize: 16,
     fontWeight: '700',
+    marginBottom: 6,
+  },
+  studentsHint: {
+    fontSize: 13,
     marginBottom: 12,
   },
   studentRow: {
@@ -279,11 +387,17 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
+  studentStatusWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    maxWidth: '52%',
+  },
   studentStatus: {
     fontSize: 14,
     fontWeight: '600',
-    maxWidth: '46%',
     textAlign: 'right',
+    flexShrink: 1,
   },
   footer: {
     flexDirection: 'row',

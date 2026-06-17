@@ -26,6 +26,11 @@ export function getPersistedMockEnrollmentEntriesSync(teacherId: string): Enroll
   return entriesByTeacher.get(String(teacherId || 'unknown')) ?? [];
 }
 
+/** Сброс in-memory кэша (тесты). */
+export function invalidateMockCoinsHistoryCache(): void {
+  entriesByTeacher.clear();
+}
+
 /**
  * Добавляет операции зачисления (после подтверждения на экране «Группы»).
  * Новые записи идут в начало списка (самые свежие сверху при сортировке по дате).

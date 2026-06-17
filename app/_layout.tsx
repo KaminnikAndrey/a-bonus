@@ -62,12 +62,14 @@ export default function RootLayout() {
                   animation: 'fade',
                 }} 
               />
-              <Stack.Screen 
-                name="(tabs)" 
-                options={{ 
+              <Stack.Screen
+                name="(tabs)"
+                options={{
                   headerShown: false,
                   animation: 'fade',
-                }} 
+                  /** Не грузить вкладки на экране auth (иначе Modal с web блокирует клики). */
+                  lazy: true,
+                }}
               />
               <Stack.Screen 
                 name="shop/[id]" 

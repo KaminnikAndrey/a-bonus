@@ -40,8 +40,9 @@ export default function TabLayout() {
   const inactive = colors.tabIconDefault;
   const iconWhite = '#FFFFFF';
 
+  /** Без сессии не монтируем вкладки — иначе на web «пустые» Modal из заказов/групп блокируют и экран auth. */
   if (!user || !user.role) {
-    return <Tabs screenOptions={{ tabBarShowLabel: false }} />;
+    return null;
   }
 
   const role = String(user?.role ?? '').toLowerCase();

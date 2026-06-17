@@ -32,10 +32,15 @@ const StudentListItem = ({ id, fullname, coins, colors, bumpCoins }: Props) => {
       <View style={[styles.counterBox, { borderColor: colors.border, backgroundColor: colors.background }]}>
         <Pressable
           onPress={() => bumpCoins(id, -1)}
+          disabled={n <= 0}
           hitSlop={10}
-          style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+          style={({ pressed }) => [
+            styles.stepBtn,
+            pressed && styles.stepBtnPressed,
+            n <= 0 && styles.stepBtnDisabled,
+          ]}
           accessibilityLabel="Минус">
-          <Text style={[styles.stepSymbol, { color: STEP_COLOR }]}>−</Text>
+          <Text style={[styles.stepSymbol, { color: n <= 0 ? '#ccc' : STEP_COLOR }]}>−</Text>
         </Pressable>
         <Text style={[styles.counterValue, { color: colors.text }]}>{n}</Text>
         <Pressable
@@ -91,6 +96,9 @@ const styles = StyleSheet.create({
   },
   stepBtnPressed: {
     opacity: 0.65,
+  },
+  stepBtnDisabled: {
+    opacity: 0.35,
   },
   stepSymbol: {
     fontSize: 26,

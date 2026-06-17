@@ -3,10 +3,18 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { appendMockCreatedTasks, hydrateMockCreatedTasks } from '@/services/groupTasks/mockCreatedTasksStore';
 import {
   buildTaskRewardLine,
+  isoToDdMmYy,
   parseDdMmYyToIso,
+  parseTaskRewardLine,
   todayIsoLocal,
 } from '@/services/groupTasks/createTaskFormUtils';
-import { getMockTeacherGroupTaskTabs } from '@/services/groupTasks/mockTeacherGroupTasks';
+import { getMockTeacherGroupTaskDetail } from '@/services/groupTasks/mockTeacherGroupTaskDetail';
+import { hydrateMockTeacherTaskEdits } from '@/services/groupTasks/mockTeacherTaskEditStore';
+import {
+  getMockTeacherGroupTaskTabs,
+  updateMockTeacherGroupTask,
+} from '@/services/groupTasks/mockTeacherGroupTasks';
+import { useLocalSearchParams } from 'expo-router';
 import { userSelector } from '@/stores/auth/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -28,10 +36,16 @@ const INPUT_RADIUS = 12;
 
 export default function CreateGroupTaskScreen() {
   const router = useRouter();
+  const { taskId: taskIdParam } = useLocalSearchParams<{ taskId?: string }>();
+  const editTaskId = Array.isArray(taskIdParam) ? taskIdParam[0] : taskIdParam;
+  const isEditMode = Boolean(editTaskId?.trim());
+
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const user = useSelector(userSelector);
+  const teacherId =
+    user?.id != null && String(user.id).trim() !== '' ? String(user.id) : 'unknown';
 
   const groupChips = useMemo(() => getMockTeacherGroupTaskTabs(), []);
 
@@ -44,15 +58,45 @@ export default function CreateGroupTaskScreen() {
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(
     () => new Set(['tg3', 'tg-lunch', 'tg-long'])
   );
+  const [editFormLoaded, setEditFormLoaded] = useState(!isEditMode);
+
+  React.useEffect(() => {
+    if (!isEditMode || !editTaskId) return;
+    let cancelled = false;
+    void (async () => {
+      await hydrateMockCreatedTasks(teacherId);
+      await hydrateMockTeacherTaskEdits(teacherId);
+      const detail = getMockTeacherGroupTaskDetail(editTaskId, teacherId);
+      if (cancelled) return;
+      if (!detail) {
+        Alert.alert('Задача', 'Не удалось загрузить задачу для редактирования.');
+        router.back();
+        return;
+      }
+      const { coins, expLead } = parseTaskRewardLine(detail.reward);
+      setTitle(detail.title);
+      setCoins(coins);
+      setExpLead(expLead);
+      setDateStart(isoToDdMmYy(detail.dateFrom));
+      setDateEnd(isoToDdMmYy(detail.dateTo));
+      setDescription(detail.descriptionSteps.join('\n'));
+      setSelectedGroupIds(new Set([detail.groupId]));
+      setEditFormLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, editTaskId, teacherId, router]);
 
   const toggleGroup = useCallback((id: string) => {
+    if (isEditMode) return;
     setSelectedGroupIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  }, []);
+  }, [isEditMode]);
 
   const onClose = () => router.back();
 
@@ -69,8 +113,30 @@ export default function CreateGroupTaskScreen() {
     let dateToIso = parseDdMmYyToIso(dateEnd) ?? dateFromIso;
     if (dateToIso < dateFromIso) dateToIso = dateFromIso;
 
-    const baseId = `created-${Date.now()}`;
     const reward = buildTaskRewardLine(coins, expLead);
+    const descriptionSteps = description
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (isEditMode && editTaskId) {
+      const ok = await updateMockTeacherGroupTask(teacherId, editTaskId, {
+        title: title.trim(),
+        reward,
+        dateFrom: dateFromIso,
+        dateTo: dateToIso,
+        descriptionSteps:
+          descriptionSteps.length > 0 ? descriptionSteps : ['Уточните условие задания у преподавателя.'],
+      });
+      if (!ok) {
+        Alert.alert('Ошибка', 'Не удалось сохранить изменения.');
+        return;
+      }
+      router.back();
+      return;
+    }
+
+    const baseId = `created-${Date.now()}`;
     const entries = Array.from(selectedGroupIds).map((groupId) => ({
       groupId,
       card: {
@@ -82,8 +148,6 @@ export default function CreateGroupTaskScreen() {
       },
     }));
 
-    const teacherId =
-      user?.id != null && String(user.id).trim() !== '' ? String(user.id) : 'unknown';
     await hydrateMockCreatedTasks(teacherId);
     const persisted = await appendMockCreatedTasks(teacherId, entries);
     if (!persisted) {
@@ -117,7 +181,15 @@ export default function CreateGroupTaskScreen() {
       <Pressable style={styles.dismissRow} onPress={onClose} hitSlop={16} accessibilityLabel="Закрыть">
         <Ionicons name="chevron-down" size={28} color={colors.text} />
       </Pressable>
-      <Text style={[styles.screenTitle, { color: colors.text }]}>Создать задачу</Text>
+      <Text style={[styles.screenTitle, { color: colors.text }]}>
+        {isEditMode ? 'Изменить задачу' : 'Создать задачу'}
+      </Text>
+
+      {isEditMode && editFormLoaded ? (
+        <Text style={[styles.editHint, { color: colors.placeholder }]}>
+          Группа: {groupChips.find((g) => selectedGroupIds.has(g.id))?.name ?? '—'}
+        </Text>
+      ) : null}
 
       <ScrollView
         style={styles.scroll}
@@ -198,38 +270,48 @@ export default function CreateGroupTaskScreen() {
           textAlignVertical="top"
         />
 
-        <Text style={[styles.label, styles.labelSpaced, { color: colors.text }]}>Группы</Text>
-        <View style={styles.chipsWrap}>
-          {groupChips.map((g) => {
-            const on = selectedGroupIds.has(g.id);
-            return (
-              <Pressable
-                key={g.id}
-                onPress={() => toggleGroup(g.id)}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: on ? TAB_PURPLE : colors.background,
-                    borderColor: on ? TAB_PURPLE : colors.border,
-                  },
-                ]}>
-                <Text
-                  style={[styles.chipText, { color: on ? '#fff' : colors.text }]}
-                  numberOfLines={2}>
-                  {g.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={[styles.hint, styles.hintAfterChips, { color: colors.placeholder }]}>
-          Все ученики из выбранных групп увидят эту задачу
-        </Text>
+        {!isEditMode ? (
+          <>
+            <Text style={[styles.label, styles.labelSpaced, { color: colors.text }]}>Группы</Text>
+            <View style={styles.chipsWrap}>
+              {groupChips.map((g) => {
+                const on = selectedGroupIds.has(g.id);
+                return (
+                  <Pressable
+                    key={g.id}
+                    onPress={() => toggleGroup(g.id)}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: on ? TAB_PURPLE : colors.background,
+                        borderColor: on ? TAB_PURPLE : colors.border,
+                      },
+                    ]}>
+                    <Text
+                      style={[styles.chipText, { color: on ? '#fff' : colors.text }]}
+                      numberOfLines={2}>
+                      {g.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={[styles.hint, styles.hintAfterChips, { color: colors.placeholder }]}>
+              Все ученики из выбранных групп увидят эту задачу
+            </Text>
+          </>
+        ) : null}
 
         <Pressable
-          style={({ pressed }) => [styles.submitBtn, { backgroundColor: TAB_PURPLE }, pressed && { opacity: 0.9 }]}
+          style={({ pressed }) => [
+            styles.submitBtn,
+            { backgroundColor: TAB_PURPLE },
+            pressed && { opacity: 0.9 },
+            isEditMode && !editFormLoaded && styles.submitBtnDisabled,
+          ]}
+          disabled={isEditMode && !editFormLoaded}
           onPress={() => void onSubmit()}>
-          <Text style={styles.submitBtnText}>Создать</Text>
+          <Text style={styles.submitBtnText}>{isEditMode ? 'Сохранить' : 'Создать'}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -254,8 +336,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
     paddingHorizontal: 16,
+  },
+  editHint: {
+    textAlign: 'center',
+    fontSize: 14,
+    marginBottom: 12,
+    paddingHorizontal: 20,
   },
   scroll: {
     flex: 1,
@@ -334,5 +422,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 17,
     fontWeight: '700',
+  },
+  submitBtnDisabled: {
+    opacity: 0.5,
   },
 });

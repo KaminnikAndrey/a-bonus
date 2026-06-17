@@ -25,6 +25,11 @@ import { useSelector } from 'react-redux';
 const CTA_PURPLE = '#6766AA';
 const INPUT_RADIUS = 14;
 
+/** Сумма к зачислению: при загрузке группы всегда с нуля. */
+function studentsWithZeroCoins(data: Student[]): Student[] {
+  return data.map((s) => ({ ...s, coins: '0' }));
+}
+
 export default function GroupsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -85,7 +90,7 @@ export default function GroupsScreen() {
       setIsStudentsLoading(true);
       const { success, data } = await getAllStudentsByGroup(selectedGroupId);
       if (success) {
-        setStudentList(data);
+        setStudentList(studentsWithZeroCoins(data));
         setBulkStudentId(null);
         setBulkAmount('');
       }
@@ -160,6 +165,9 @@ export default function GroupsScreen() {
     const { success } = await giveCoinsToStudens(selectedGroupId as string, studentList);
     if (success) {
       setSuccessModalVisible(true);
+      setStudentList((prev) => studentsWithZeroCoins(prev));
+      setBulkStudentId(null);
+      setBulkAmount('');
     }
   };
 
@@ -266,28 +274,32 @@ export default function GroupsScreen() {
         </View>
       )}
 
-      <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: colors.background }]} onPress={(e) => e.stopPropagation()}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Ученик</Text>
-            <ScrollView style={styles.modalList} keyboardShouldPersistTaps="handled">
-              {studentList.map((s) => (
-                <Pressable
-                  key={s.id}
-                  style={styles.modalRow}
-                  onPress={() => {
-                    setBulkStudentId(s.id);
-                    setPickerOpen(false);
-                  }}>
-                  <Text style={[styles.modalRowText, { color: colors.text }]} numberOfLines={2}>
-                    {s.fullname}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+      {pickerOpen ? (
+        <Modal transparent animationType="fade" visible onRequestClose={() => setPickerOpen(false)}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setPickerOpen(false)}>
+            <Pressable
+              style={[styles.modalCard, { backgroundColor: colors.background }]}
+              onPress={(e) => e.stopPropagation()}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Ученик</Text>
+              <ScrollView style={styles.modalList} keyboardShouldPersistTaps="handled">
+                {studentList.map((s) => (
+                  <Pressable
+                    key={s.id}
+                    style={styles.modalRow}
+                    onPress={() => {
+                      setBulkStudentId(s.id);
+                      setPickerOpen(false);
+                    }}>
+                    <Text style={[styles.modalRowText, { color: colors.text }]} numberOfLines={2}>
+                      {s.fullname}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </Modal>
+      ) : null}
 
       <CustomModal
         onRequestClose={closeConfirmModal}

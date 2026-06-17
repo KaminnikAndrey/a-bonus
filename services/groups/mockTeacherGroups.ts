@@ -32,13 +32,14 @@ export function getMockTeacherGroupsTabs(): MockGroup[] {
   return getMockTeacherGroupTaskTabs().map((t) => ({ id: t.id, name: t.name }));
 }
 
-const STUDENTS_BY_GROUP: Record<string, Student[]> = {
+/** Счётчики на экране «Группы» — сколько зачислить; по умолчанию 0 у всех. */
+export const MOCK_STUDENTS_BY_GROUP: Record<string, Student[]> = {
   tg1: [
-    { id: '101', fullname: 'Величко Алиса Павловна', coins: '5' },
-    { id: '102', fullname: 'Поляков Артём Вячеславович', coins: '1' },
-    { id: '103', fullname: 'Коссе Иван Николаевич', coins: '5' },
-    { id: '104', fullname: 'Соколов Артем Иванович', coins: '4' },
-    { id: '105', fullname: 'Бут Данил Игоревич', coins: '3' },
+    { id: '101', fullname: 'Величко Алиса Павловна', coins: '0' },
+    { id: '102', fullname: 'Поляков Артём Вячеславович', coins: '0' },
+    { id: '103', fullname: 'Коссе Иван Николаевич', coins: '0' },
+    { id: '104', fullname: 'Соколов Артем Иванович', coins: '0' },
+    { id: '105', fullname: 'Бут Данил Игоревич', coins: '0' },
   ],
   'tg-child': [
     { id: 'c01', fullname: 'Смирнов Даниил Олегович', coins: '0' },
@@ -95,18 +96,31 @@ export async function mockGetAllGroups(
   };
 }
 
+function studentsForEnrollmentUi(list: Student[]): Student[] {
+  return list.map((s) => ({ ...s, coins: '0' }));
+}
+
+/** Синхронный список учеников группы (те же данные, что на экране «Группы»). */
+export function getMockStudentsByGroupSync(groupId: string): Student[] {
+  const list = MOCK_STUDENTS_BY_GROUP[groupId];
+  if (!list?.length) {
+    return [{ id: '999', fullname: 'Нет учеников в демо-группе', coins: '0' }];
+  }
+  return studentsForEnrollmentUi(list);
+}
+
 export async function mockGetStudentsByGroup(groupId: string): Promise<{
   success: boolean;
   data: Student[];
   error?: string;
 }> {
   await delay(MOCK_DELAY_MS);
-  const list = STUDENTS_BY_GROUP[groupId] ?? [
+  const list = MOCK_STUDENTS_BY_GROUP[groupId] ?? [
     { id: '999', fullname: 'Нет учеников в демо-группе', coins: '0' },
   ];
   return {
     success: true,
-    data: list.map((s) => ({ ...s })),
+    data: studentsForEnrollmentUi(list),
   };
 }
 

@@ -7,6 +7,10 @@ import {
 } from '@/services/groupTasks/mockTeacherGroupTaskDetail';
 import { getMockTeacherTaskStudentSubmissions } from '@/services/groupTasks/mockTeacherTaskStudentReview';
 import { hydrateMockCreatedTasks } from '@/services/groupTasks/mockCreatedTasksStore';
+import {
+  applyTeacherTaskReview,
+  hydrateMockTeacherTaskReviews,
+} from '@/services/groupTasks/mockTeacherTaskReviewStore';
 import { userSelector } from '@/stores/auth/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -60,25 +64,29 @@ export default function TeacherGroupTaskStudentCheckScreen() {
     user?.id != null && String(user.id).trim() !== '' ? String(user.id) : 'unknown';
 
   const [comment, setComment] = useState('');
+  const [reviewTick, setReviewTick] = useState(0);
 
   useEffect(() => {
     void hydrateMockCreatedTasks(teacherId);
+    void hydrateMockTeacherTaskReviews(teacherId);
   }, [teacherId]);
 
-  const detail = useMemo(
-    () => (taskId ? getMockTeacherGroupTaskDetail(taskId, teacherId) : undefined),
-    [taskId, teacherId]
-  );
+  const detail = useMemo(() => {
+    void reviewTick;
+    return taskId ? getMockTeacherGroupTaskDetail(taskId, teacherId) : undefined;
+  }, [taskId, teacherId, reviewTick]);
 
   const student = useMemo(
     () => (detail && studentId ? detail.students.find((s) => s.id === studentId) : undefined),
     [detail, studentId]
   );
 
-  const attempts = useMemo(
-    () => (taskId && studentId ? getMockTeacherTaskStudentSubmissions(taskId, studentId) : []),
-    [taskId, studentId]
-  );
+  const attempts = useMemo(() => {
+    void reviewTick;
+    return taskId && studentId
+      ? getMockTeacherTaskStudentSubmissions(taskId, studentId, teacherId)
+      : [];
+  }, [taskId, studentId, teacherId, reviewTick]);
 
   const onBack = () => router.back();
 
@@ -93,12 +101,22 @@ export default function TeacherGroupTaskStudentCheckScreen() {
     : '';
 
   const submitReview = (action: 'revision' | 'accept') => {
-    const title = action === 'accept' ? 'Принято' : 'Отправлено на доработку';
-    const msg =
-      action === 'accept'
-        ? 'Решение ученика принято (демо).'
-        : 'Ученику отправлен комментарий на доработку (демо).';
-    Alert.alert(title, msg, [{ text: 'OK', onPress: () => router.back() }]);
+    if (!taskId || !studentId) return;
+    if (action === 'revision' && !comment.trim()) {
+      Alert.alert('Комментарий', 'Добавьте комментарий для доработки.');
+      return;
+    }
+    void (async () => {
+      await applyTeacherTaskReview(teacherId, taskId, studentId, action, comment);
+      await hydrateMockTeacherTaskReviews(teacherId);
+      setReviewTick((t) => t + 1);
+      const title = action === 'accept' ? 'Принято' : 'Отправлено на доработку';
+      const msg =
+        action === 'accept'
+          ? 'Решение ученика принято.'
+          : 'Ученику отправлен комментарий на доработку.';
+      Alert.alert(title, msg, [{ text: 'OK', onPress: () => router.back() }]);
+    })();
   };
 
   const inputStyle = [

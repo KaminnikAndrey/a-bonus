@@ -16,6 +16,10 @@ type Props = {
  * Подтверждение удаления задачи. RN Modal — поверх навигации; внутри — фон + карточка.
  */
 export default function DeleteTaskConfirmModal({ visible, onCancel, onConfirm }: Props) {
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal
       animationType="fade"

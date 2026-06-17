@@ -1,0 +1,266 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DeleteTaskConfirmModal matches snapshot when visible 1`] = `
+<Modal
+  animationType="fade"
+  hardwareAccelerated={true}
+  onRequestClose={[MockFunction]}
+  statusBarTranslucent={true}
+  transparent={true}
+  visible={true}
+>
+  <View
+    pointerEvents="box-none"
+    style={
+      {
+        "flex": 1,
+      }
+    }
+  >
+    <View
+      accessibilityLabel="Закрыть"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "backgroundColor": "rgba(0, 0, 0, 0.35)",
+          "bottom": 0,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+        }
+      }
+    />
+    <View
+      pointerEvents="box-none"
+      style={
+        {
+          "alignItems": "center",
+          "bottom": 0,
+          "justifyContent": "center",
+          "left": 0,
+          "paddingHorizontal": 28,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+        }
+      }
+    >
+      <View
+        pointerEvents="auto"
+        style={
+          {
+            "backgroundColor": "#fff",
+            "borderRadius": 20,
+            "elevation": 12,
+            "maxWidth": 340,
+            "overflow": "hidden",
+            "width": "100%",
+          }
+        }
+      >
+        <View
+          style={
+            {
+              "paddingBottom": 22,
+              "paddingHorizontal": 22,
+              "paddingTop": 26,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#000000",
+                "fontSize": 18,
+                "fontWeight": "700",
+                "marginBottom": 12,
+                "textAlign": "center",
+              }
+            }
+          >
+            Удалить задачу
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#666666",
+                "fontSize": 15,
+                "fontWeight": "400",
+                "lineHeight": 22,
+                "textAlign": "center",
+              }
+            }
+          >
+            Задача будет безвозвратно удалена, ученики потеряют к ней доступ
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "backgroundColor": "#E5E5E5",
+              "height": 0.5,
+            }
+          }
+        />
+        <View
+          style={
+            {
+              "alignItems": "stretch",
+              "flexDirection": "row",
+              "minHeight": 52,
+            }
+          }
+        >
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onFocus={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              [
+                {
+                  "alignItems": "center",
+                  "flex": 1,
+                  "justifyContent": "center",
+                  "paddingVertical": 14,
+                },
+                false,
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#FF3B30",
+                  "fontSize": 17,
+                  "fontWeight": "600",
+                  "textAlign": "center",
+                }
+              }
+            >
+              Отмена
+            </Text>
+          </View>
+          <View
+            style={
+              {
+                "backgroundColor": "#E5E5E5",
+                "width": 0.5,
+              }
+            }
+          />
+          <View
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": undefined,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onFocus={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              [
+                {
+                  "alignItems": "center",
+                  "flex": 1,
+                  "justifyContent": "center",
+                  "paddingVertical": 14,
+                },
+                false,
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#007AFF",
+                  "fontSize": 17,
+                  "fontWeight": "600",
+                  "textAlign": "center",
+                }
+              }
+            >
+              Подтвердить
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  </View>
+</Modal>
+`;

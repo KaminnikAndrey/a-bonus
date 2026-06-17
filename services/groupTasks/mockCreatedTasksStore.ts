@@ -55,10 +55,58 @@ export function findCreatedTaskCardById(teacherId: string, taskId: string): Stor
   return rows.find((r) => r.card.id === taskId)?.card;
 }
 
+export function findCreatedTaskGroupId(teacherId: string, taskId: string): string | undefined {
+  const rows = rowsByTeacher.get(String(teacherId || 'unknown')) ?? [];
+  return rows.find((r) => r.card.id === taskId)?.groupId;
+}
+
 /**
  * Добавляет задачи и пытается сохранить на диск.
  * @returns true если запись в AsyncStorage прошла успешно
  */
+/**
+ * Удаляет задачу, созданную преподавателем на экране «Создать задачу».
+ * Статические моки из `mockTeacherGroupTasks` не хранятся здесь — вернёт `false`.
+ */
+export async function updateMockCreatedTaskById(
+  teacherId: string,
+  taskId: string,
+  patch: Partial<StoredGroupTaskCard>
+): Promise<boolean> {
+  const tid = String(teacherId || 'unknown');
+  await hydrateMockCreatedTasks(tid);
+  const cur = rowsByTeacher.get(tid) ?? [];
+  const idx = cur.findIndex((r) => r.card.id === taskId);
+  if (idx < 0) return false;
+  const next = [...cur];
+  next[idx] = { ...next[idx], card: { ...next[idx].card, ...patch } };
+  rowsByTeacher.set(tid, next);
+  try {
+    await AsyncStorage.setItem(storageKey(tid), JSON.stringify(next));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function removeMockCreatedTaskById(
+  teacherId: string,
+  taskId: string
+): Promise<boolean> {
+  const tid = String(teacherId || 'unknown');
+  await hydrateMockCreatedTasks(tid);
+  const cur = rowsByTeacher.get(tid) ?? [];
+  const next = cur.filter((r) => r.card.id !== taskId);
+  if (next.length === cur.length) return false;
+  rowsByTeacher.set(tid, next);
+  try {
+    await AsyncStorage.setItem(storageKey(tid), JSON.stringify(next));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function appendMockCreatedTasks(
   teacherId: string,
   entries: CreatedTaskRow[]
